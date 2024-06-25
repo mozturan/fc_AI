@@ -1,0 +1,6 @@
+.venv/
+input_videos
+models
+runs
+training
+*.pt
