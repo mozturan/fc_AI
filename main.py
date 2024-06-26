@@ -2,6 +2,7 @@ from utils import read_video, save_video
 from trackers import Tracker
 from assigners import ColorAssigner, BallAssigner
 from camera import CameraMovementEstimator
+from perspective import Transformer
 import cv2
 import numpy as np
 
@@ -28,6 +29,10 @@ def main():
                                                                  stub_path="stub/camera_move.pkl")
     camera_estimator.add_adjust_positions_to_tracks(tracks,
                                                     camera_move_per_frame)
+    
+    #* perspective transformation
+    transformer = Transformer()
+    transformer.add_transformed_position_to_tracks(tracks)
     
     #* ball position interpolation
     tracks["ball"] = tracker.position_interpolation(tracks["ball"])
