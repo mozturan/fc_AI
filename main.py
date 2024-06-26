@@ -1,6 +1,7 @@
 from utils import read_video, save_video
 from trackers import Tracker
 from assigners import ColorAssigner, BallAssigner
+from camera import CameraMovementEstimator
 import cv2
 import numpy as np
 
@@ -17,10 +18,16 @@ def main():
     tracks = tracker.get_object_tracks(frames,
                                       read_from_stub=True,
                                       stub_path="tracks.pkl")
-
+    
+    #* Camera Movement Estimator
+    camera_estimator = CameraMovementEstimator(frames[0])
+    camera_move_per_frame = camera_estimator.get_camera_movement(frames,
+                                                                 read_from_stub=True,
+                                                                 stub_path="stub/camera_move.pkl")
+    
     #* ball position interpolation
-
     tracks["ball"] = tracker.position_interpolation(tracks["ball"])
+
     #* Get the team for each player
     color_assigner = ColorAssigner()
     color_assigner.assign_color(frames[0], 
@@ -53,6 +60,9 @@ def main():
     #* draw output 
     output_frames = tracker.draw_annotations(frames, tracks, team_ball_control)
 
+    #* Draw camera movement
+    output_frames = camera_estimator.draw_camera_movement(output_frames, camera_move_per_frame)
+    
     #* save the tracks
     save_video(output_frames, "output_videos/deneme.mp4")
 
