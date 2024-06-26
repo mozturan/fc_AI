@@ -1,6 +1,6 @@
 from utils import read_video, save_video
 from trackers import Tracker
-from assigners import ColorAssigner, BallAssigner
+from assigners import ColorAssigner, BallAssigner, FeatureAssigner
 from camera import CameraMovementEstimator
 from perspective import Transformer
 import cv2
@@ -33,9 +33,12 @@ def main():
     #* perspective transformation
     transformer = Transformer()
     transformer.add_transformed_position_to_tracks(tracks)
-    
+
     #* ball position interpolation
     tracks["ball"] = tracker.position_interpolation(tracks["ball"])
+
+    feature_estimator = FeatureAssigner()
+    feature_estimator.add_speed_and_distance_to_tracks(tracks)
 
     #* Get the team for each player
     color_assigner = ColorAssigner()
@@ -72,6 +75,9 @@ def main():
     #* Draw camera movement
     output_frames = camera_estimator.draw_camera_movement(output_frames, camera_move_per_frame)
     
+    #* Draw player feature
+    output_frames = feature_estimator.draw_speed_and_distance(output_frames, tracks)
+
     #* save the tracks
     save_video(output_frames, "output_videos/deneme.mp4")
 
