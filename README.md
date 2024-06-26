@@ -9,6 +9,7 @@ Goal is to detect players, ball, referees and extract some features and values u
 - **Speed and distance calculation** for the players
 - Different drawing styles than bbox
 
+![11](https://github.com/mozturan/fc_AI/assets/89272933/8bf87054-c5ea-4a88-8b05-50cffa773b80)
 
 NOTE: The software implemented on this [dataset on Kaggle](https://www.kaggle.com/competitions/dfl-bundesliga-data-shootout/data?select=clips) and **Yolov5** is trained with this [dataset on Roboflow](https://universe.roboflow.com/roboflow-jvuqo/football-players-detection-3zvbc/dataset/1)
 
