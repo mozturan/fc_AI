@@ -4,3 +4,6 @@ models
 runs
 training
 *.pt
+__pycache__
+*.mp4
+*.pkl
