@@ -8,6 +8,15 @@ from utils import measure_distance,measure_xy_distance
 
 class CameraMovementEstimator():
     def __init__(self,frame):
+        """
+        Initializes a CameraMovementEstimator object with the given frame.
+
+        Args:
+            frame (numpy.ndarray): The input frame to initialize the object with.
+
+        Returns:
+            None
+        """
         self.minimum_distance = 5
 
         self.lk_params = dict(
@@ -30,6 +39,27 @@ class CameraMovementEstimator():
         )
 
     def get_camera_movement(self,frames,read_from_stub=False, stub_path=None):
+        """
+        Calculates the camera movement for each frame in the given list of frames.
+
+        Args:
+            frames (List[numpy.ndarray]): A list of frames to calculate camera movement for.
+            read_from_stub (bool, optional): Whether to read the camera movement from a stub file. Defaults to False.
+            stub_path (str, optional): The path to the stub file. Defaults to None.
+
+        Returns:
+            List[List[int]]: A list of camera movement coordinates for each frame.
+
+        Raises:
+            FileNotFoundError: If the stub file does not exist and read_from_stub is True.
+
+        Description:
+            This function calculates the camera movement for each frame in the given list of frames. It first checks if the 
+            camera movement should be read from a stub file. If so, it reads the camera movement from the stub file and returns 
+            it. Otherwise, it initializes the camera movement list and performs optical flow tracking on each frame. It calculates 
+            the maximum distance between the tracked features in each frame and updates the camera movement coordinates if the 
+            maximum distance exceeds the minimum distance threshold. Finally, it returns the camera movement list.
+        """
         # Read the stub 
         if read_from_stub and stub_path is not None and os.path.exists(stub_path):
             with open(stub_path,'rb') as f:
@@ -84,6 +114,16 @@ class CameraMovementEstimator():
         return output_frames
     
     def add_adjust_positions_to_tracks(self,tracks, camera_movement_per_frame):
+        """
+        Adds the adjusted positions to the tracks based on the camera movement.
+
+        Parameters:
+            tracks (dict): A dictionary containing the tracks. The keys are objects, and the values are lists of tracks for each object.
+            camera_movement_per_frame (list): A list of camera movements per frame. Each element in the list represents the camera movement for a specific frame.
+
+        Returns:
+            None
+        """
         for object, object_tracks in tracks.items():
             for frame_num, track in enumerate(object_tracks):
                 for track_id, track_info in track.items():

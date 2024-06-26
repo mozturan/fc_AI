@@ -18,7 +18,7 @@ def main():
     #* get the tracks
     tracks = tracker.get_object_tracks(frames,
                                       read_from_stub=True,
-                                      stub_path="tracks.pkl")
+                                      stub_path="stubs/tracks.pkl")
 
     tracker.add_position_to_tracks(tracks)
 

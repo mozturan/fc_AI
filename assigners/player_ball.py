@@ -7,6 +7,16 @@ class BallAssigner():
         self.max_player_ball_distance = 70
 
     def assign_ball(self, players, ball_bbox):
+        """
+        Assigns the ball to the player closest to it based on the players' bounding boxes.
+        
+        Parameters:
+            players (dict): A dictionary containing player information with player IDs as keys and bounding boxes as values.
+            ball_bbox (tuple): A tuple representing the bounding box of the ball.
+        
+        Returns:
+            int: The ID of the player assigned to the ball.
+        """
 
         ball_position = get_center_of_bbox(ball_bbox)
 

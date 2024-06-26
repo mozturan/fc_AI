@@ -3,10 +3,32 @@ from sklearn.cluster import KMeans
 class ColorAssigner:
 
     def __init__(self):
+        """
+        Initializes a new instance of the ColorAssigner class.
+
+        This constructor initializes two dictionaries: `team_colors` and `player_team_dict`.
+        `team_colors` is an empty dictionary that will store the colors of each team.
+        `player_team_dict` is an empty dictionary that will store the mapping between player IDs and their respective teams.
+
+        Parameters:
+            None
+
+        Returns:
+            None
+        """
         self.team_colors = {}
         self.player_team_dict = {}
 
     def get_clustering_model(self,image):
+        """
+        Reshapes the input image to a 2D array and performs K-means clustering with 2 clusters.
+
+        Parameters:
+            image (numpy.ndarray): The input image to be reshaped.
+
+        Returns:
+            KMeans: The KMeans clustering model.
+        """
         # Reshape the image to 2D array
         image_2d = image.reshape(-1,3)
 
@@ -17,6 +39,13 @@ class ColorAssigner:
         return kmeans
 
     def assign_color(self,frame,player_detections):
+        """
+        Assigns colors to players based on the player detections provided.
+        
+        Parameters:
+            frame: The frame containing player detections.
+            player_detections: A dictionary of player detections with their bounding boxes.
+        """
         player_colors = []
         for _, player_detection in player_detections.items():
             bbox = player_detection["bbox"]
@@ -32,6 +61,26 @@ class ColorAssigner:
         self.team_colors[2] = kmeans.cluster_centers_[1]
 
     def get_player_color(self,frame,bbox):
+        """
+        Get the color of a player based on the bounding box of their detection in a frame.
+
+        Parameters:
+            frame (numpy.ndarray): The frame containing player detections.
+            bbox (tuple): The bounding box of the player detection.
+
+        Returns:
+            numpy.ndarray: The color of the player.
+
+        Description:
+            This function takes a frame and a bounding box of a player detection and returns the color of the player.
+            It first extracts the image region corresponding to the bounding box. Then, it selects the top half of the image.
+            Next, it applies a clustering algorithm (KMeans) to the top half of the image to group pixels into clusters.
+            The cluster labels are then reshaped to match the shape of the top half of the image.
+            The function identifies the cluster of pixels that are present in the four corners of the image.
+            The cluster that appears most frequently in the corners is considered the non-player cluster.
+            The player cluster is then determined as the other cluster.
+            Finally, the function returns the color of the player cluster.
+        """
         image = frame[int(bbox[1]):int(bbox[3]),int(bbox[0]):int(bbox[2])]
 
         top_half_image = image[0:int(image.shape[0]/2),:]
@@ -55,6 +104,17 @@ class ColorAssigner:
         return player_color
     
     def get_teams(self, frame, player_bbox, player_id):
+        """
+        Returns the team ID of a player based on the player's unique ID and color.
+        
+        Parameters:
+            frame: The frame containing the player.
+            player_bbox: The bounding box of the player.
+            player_id: The unique ID of the player.
+        
+        Returns:
+            The team ID of the player.
+        """
         if player_id in self.player_team_dict:
             return self.player_team_dict[player_id]
 

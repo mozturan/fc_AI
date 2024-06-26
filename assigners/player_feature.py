@@ -9,6 +9,28 @@ class FeatureAssigner:
         self.frame_rate = 24
 
     def add_speed_and_distance_to_tracks(self, tracks):
+        """
+        Adds the speed and distance information to the tracks dictionary.
+
+        Args:
+            tracks (dict): A dictionary containing the tracks information.
+
+        Returns:
+            None
+
+        This function iterates over the objects in the tracks dictionary and calculates the speed and distance 
+        information for each object and its corresponding tracks. The speed is calculated by dividing the distance 
+        between the start and end positions of a track by the time elapsed between the start and end frames. The 
+        speed is then converted from meters per second to kilometers per hour. The distance information is accumulated 
+        for each object and track and stored in the total_distance dictionary. The speed and distance information 
+        is then added to the corresponding tracks in the tracks dictionary.
+
+        Note:
+            - The function assumes that the tracks dictionary is structured as follows:
+                - tracks[object][frame_num][track_id] = {'position_transformed': (x, y), ...}
+            - The function assumes that the frame_window attribute is set to the desired frame window size.
+            - The function assumes that the frame_rate attribute is set to the desired frame rate.
+        """
 
         total_distance= {}
         for object, object_tracks in tracks.items():

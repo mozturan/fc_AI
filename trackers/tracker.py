@@ -15,6 +15,16 @@ class Tracker:
         self.tracker = sv.ByteTrack()
 
     def add_position_to_tracks(sekf,tracks):
+        """
+            Adds the position of each object in the tracks dictionary to the corresponding track in the tracks dictionary.
+            
+            Parameters:
+                - sekf: The second parameter is not used in this function. It is included in the function signature by mistake.
+                - tracks (dict): A dictionary containing tracks of different objects. The keys are the object names, and the values are dictionaries of tracks for each object. Each track is a dictionary of track information, including the bounding box of the object.
+            
+            Returns:
+                None
+        """
         for object, object_tracks in tracks.items():
             for frame_num, track in enumerate(object_tracks):
                 for track_id, track_info in track.items():
@@ -26,6 +36,29 @@ class Tracker:
                     tracks[object][frame_num][track_id]['position'] = position
 
     def position_interpolation(self, ball_positions):
+        """
+        Interpolates missing values in the given list of ball positions.
+
+        Parameters:
+            ball_positions (list): A list of dictionaries, where each dictionary represents a ball position.
+                Each ball position is a dictionary with the following structure:
+                {
+                    frame_number (int): The frame number of the ball position.
+                    {
+                        'bbox' (list): A list of four numbers representing the bounding box coordinates of the ball.
+                    }
+                }
+
+        Returns:
+            list: A list of dictionaries, where each dictionary represents a ball position with interpolated missing values.
+                Each ball position is a dictionary with the following structure:
+                {
+                    frame_number (int): The frame number of the ball position.
+                    {
+                        'bbox' (list): A list of four numbers representing the bounding box coordinates of the ball.
+                    }
+                }
+        """
         ball_positions = [x.get(1,{}).get('bbox',[]) for x in ball_positions]
         df_ball_positions = pd.DataFrame(ball_positions,columns=['x1','y1','x2','y2'])
 
@@ -38,6 +71,22 @@ class Tracker:
         return ball_positions
     
     def detect_frames(self, frames):
+        """
+        Detects objects in a batch of frames using a YOLO model.
+
+        Args:
+            frames (List[numpy.ndarray]): A list of frames to detect objects in.
+
+        Returns:
+            List[Dict[str, Any]]: A list of dictionaries, where each dictionary represents the detection results for a frame.
+                Each detection result is a dictionary with the following structure:
+                {
+                    'boxes': List[List[float]],
+                    'scores': List[float],
+                    'labels': List[int],
+                    'xyxy': List[List[float]]
+                }
+        """
         batch_size = 20
         detections = []
         for i in range(0, len(frames), batch_size):
@@ -48,6 +97,24 @@ class Tracker:
         return detections
     
     def get_object_tracks(self, frames, read_from_stub=False, stub_path=None):
+        """
+        Generates object tracks for a given sequence of frames.
+
+        Args:
+            frames (List[np.ndarray]): A list of frames to process.
+            read_from_stub (bool, optional): Whether to read tracks from a stub file. Defaults to False.
+            stub_path (str, optional): The path to the stub file. Defaults to None.
+
+        Returns:
+            dict: A dictionary containing the object tracks. The keys are "players", "referees", and "ball", and the values are dictionaries mapping track IDs to bounding box coordinates.
+
+        Description:
+            This function takes a sequence of frames and detects objects in each frame using the YOLO model. The detected objects are then tracked using the supervision.ByteTrack tracker. The object tracks are stored in a dictionary with keys "players", "referees", and "ball". Each key maps to a list of dictionaries, where each dictionary represents the bounding box coordinates of an object at a specific frame. The track IDs are used as keys in the dictionaries, and the bounding box coordinates are stored under the key "bbox". 
+
+            If the `read_from_stub` parameter is set to True and a valid `stub_path` is provided, the function will attempt to read the object tracks from the stub file instead of generating new tracks. The stub file is a binary file that contains serialized object tracks. If the stub file exists, its contents are loaded and returned as the object tracks.
+
+            If `stub_path` is provided, the generated object tracks are also saved to the stub file for future use.
+        """
         
         if read_from_stub and stub_path is not None and os.path.exists(stub_path):
             with open(stub_path,'rb') as f:
@@ -188,6 +255,29 @@ class Tracker:
         return frame
                         
     def draw_annotations(self, frames, tracks, team_ball_control):
+        """
+        Draw annotations on frames based on the given tracks and team ball control.
+
+        Args:
+            frames (List[np.ndarray]): A list of frames to draw annotations on.
+            tracks (Dict[str, Dict[int, Dict[str, Any]]]): A dictionary containing the tracks of players, balls, and referees.
+                The dictionary has the following structure:
+                {
+                    'players': Dict[int, Dict[str, Any]],
+                    'ball': Dict[int, Dict[str, Any]],
+                    'referees': Dict[int, Dict[str, Any]]
+                }
+                Each track is represented as a dictionary with the following structure:
+                {
+                    'bbox': List[float],
+                    'color': Tuple[int, int, int],
+                    'has_ball': bool
+                }
+            team_ball_control (List[int]): A list representing the team ball control for each frame.
+
+        Returns:
+            List[np.ndarray]: A list of frames with annotations drawn on them.
+        """
         output_frames = []
 
         for frame_num, frame in enumerate(frames):

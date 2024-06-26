@@ -7,3 +7,4 @@ training
 __pycache__
 *.mp4
 *.pkl
+stubs
