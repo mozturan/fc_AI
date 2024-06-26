@@ -18,12 +18,16 @@ def main():
     tracks = tracker.get_object_tracks(frames,
                                       read_from_stub=True,
                                       stub_path="tracks.pkl")
-    
+
+    tracker.add_position_to_tracks(tracks)
+
     #* Camera Movement Estimator
     camera_estimator = CameraMovementEstimator(frames[0])
     camera_move_per_frame = camera_estimator.get_camera_movement(frames,
                                                                  read_from_stub=True,
                                                                  stub_path="stub/camera_move.pkl")
+    camera_estimator.add_adjust_positions_to_tracks(tracks,
+                                                    camera_move_per_frame)
     
     #* ball position interpolation
     tracks["ball"] = tracker.position_interpolation(tracks["ball"])
