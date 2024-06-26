@@ -14,6 +14,29 @@ class Tracker:
         self.model = YOLO(model_path) 
         self.tracker = sv.ByteTrack()
 
+    def add_position_to_tracks(sekf,tracks):
+        for object, object_tracks in tracks.items():
+            for frame_num, track in enumerate(object_tracks):
+                for track_id, track_info in track.items():
+                    bbox = track_info['bbox']
+                    if object == 'ball':
+                        position= get_center_of_bbox(bbox)
+                    else:
+                        position = get_foot_position(bbox)
+                    tracks[object][frame_num][track_id]['position'] = position
+
+    def position_interpolation(self, ball_positions):
+        ball_positions = [x.get(1,{}).get('bbox',[]) for x in ball_positions]
+        df_ball_positions = pd.DataFrame(ball_positions,columns=['x1','y1','x2','y2'])
+
+        # Interpolate missing values
+        df_ball_positions = df_ball_positions.interpolate()
+        df_ball_positions = df_ball_positions.bfill()
+
+        ball_positions = [{1: {"bbox":x}} for x in df_ball_positions.to_numpy().tolist()]
+
+        return ball_positions
+    
     def detect_frames(self, frames):
         batch_size = 20
         detections = []
@@ -98,7 +121,7 @@ class Tracker:
                     startAngle=-45,
                     endAngle=235,
                     color = color,
-                    thickness = 2,
+                    thickness = 1,
                     lineType = cv2.LINE_AA) 
 
         rectangle_width = 40
@@ -144,8 +167,27 @@ class Tracker:
         cv2.drawContours(frame, [triangle_points],0,(0,0,0), 2)
 
         return frame
-            
-    def draw_annotations(self, frames, tracks):
+
+    def draw_team_ball_control(self,frame,frame_num,team_ball_control):
+        # Draw a semi-transparent rectaggle 
+        overlay = frame.copy()
+        cv2.rectangle(overlay, (1350, 850), (1900,970), (255,255,255), -1 )
+        alpha = 0.4
+        cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
+
+        team_ball_control_till_frame = team_ball_control[:frame_num+1]
+        # Get the number of time each team had ball control
+        team_1_num_frames = team_ball_control_till_frame[team_ball_control_till_frame==1].shape[0]
+        team_2_num_frames = team_ball_control_till_frame[team_ball_control_till_frame==2].shape[0]
+        team_1 = team_1_num_frames/(team_1_num_frames+team_2_num_frames)
+        team_2 = team_2_num_frames/(team_1_num_frames+team_2_num_frames)
+
+        cv2.putText(frame, f"Team 1 Ball Control: {team_1*100:.2f}%",(1400,900), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 3)
+        cv2.putText(frame, f"Team 2 Ball Control: {team_2*100:.2f}%",(1400,950), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 3)
+
+        return frame
+                        
+    def draw_annotations(self, frames, tracks, team_ball_control):
         output_frames = []
 
         for frame_num, frame in enumerate(frames):
@@ -157,13 +199,17 @@ class Tracker:
 
             #drawin players 
             for track_id, player in player_dict.items():
+                color = player.get("color", (0,0,0))
+
                 frame = self.draw_ellipse(frame, player["bbox"], 
-                                          (0,0,255), track_id)
-        
+                                          color, track_id)
+
+                if player.get('has_ball', False):
+                    frame = self.draw_traingle(frame, player["bbox"],(0,0,255))
             #drawing referees
             for _, referee in referee_dict.items():
                 frame = self.draw_ellipse(frame, referee["bbox"], 
-                                          (255,0,0))
+                                          (0,0,0))
 
             # #drawing ball
             # for track_id, ball in ball_dict.items():
@@ -174,6 +220,8 @@ class Tracker:
             for track_id, ball in ball_dict.items():
                 frame = self.draw_traingle(frame, ball["bbox"],(0,255,0))
 
+            # Draw team ball control
+            frame = self.draw_team_ball_control(frame, frame_num, team_ball_control)
             output_frames.append(frame)
 
         return output_frames
